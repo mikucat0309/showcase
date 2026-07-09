@@ -51,7 +51,7 @@ objects.get(
 )
 
 objects.get(
-  '/buckets/:bucket/objects/:key',
+  '/buckets/:bucket/objects/:key{.+}',
   zValidator('param', BucketKeyParams, onValidationError),
   zValidator('query', DownloadQuerySchema, onValidationError),
   async (c) => {
@@ -71,7 +71,7 @@ objects.get(
 )
 
 objects.delete(
-  '/buckets/:bucket/objects/:key',
+  '/buckets/:bucket/objects/:key{.+}',
   zValidator('param', BucketKeyParams, onValidationError),
   async (c) => {
     const { bucket, key } = c.req.valid('param')

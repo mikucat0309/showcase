@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "showcase",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-09",
+  "secrets": {
+    "required": ["BUCKETS"]
+  },
+  "workers_dev": false,
+  "preview_urls": false,
+  "send_metrics": false
+}

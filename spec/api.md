@@ -22,10 +22,13 @@ Example:
     "region": "auto",
     "endpoint": "https://your-s3-endpoint.com/my-bucket",
     "accessKeyId": "YOUR_KEY",
-    "secretAccessKey": "YOUR_SECRET"
+    "secretAccessKey": "YOUR_SECRET",
+    "publicEndpoint": "https://cdn.example.com/my-bucket/"
   }
 ]
 ```
+
+- `publicEndpoint` (optional): base URL for public object links
 
 ## List bucket
 
@@ -50,6 +53,7 @@ Response 200:
 {
   items: Array<{ key: string; size: number; lastModified: string; etag: string }>,
   nextCursor?: string
+  publicEndpoint?: string
 }
 ```
 

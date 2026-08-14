@@ -11,7 +11,7 @@ import {
   ListObjectsResponse,
   DownloadResponse,
 } from './types'
-import { getS3Client, listBucketNames, sanitizeETag } from '../s3'
+import { getS3Client, getPublicEndpoint, listBucketNames, sanitizeETag } from '../s3'
 
 const objects = new Hono()
 
@@ -36,7 +36,12 @@ objects.get(
       cursor,
     )
 
-    if (!result) return c.json<ListObjectsResponse>({ items: [] })
+    if (!result) {
+      return c.json<ListObjectsResponse>({
+        items: [],
+        publicEndpoint: getPublicEndpoint(bucket) ?? undefined,
+      })
+    }
 
     return c.json<ListObjectsResponse>({
       items: (result.objects ?? []).map((o) => ({
@@ -46,6 +51,7 @@ objects.get(
         etag: sanitizeETag(o.ETag),
       })),
       nextCursor: result.nextContinuationToken,
+      publicEndpoint: getPublicEndpoint(bucket) ?? undefined,
     })
   },
 )

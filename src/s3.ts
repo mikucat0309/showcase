@@ -7,6 +7,7 @@ type BucketConfig = {
   endpoint: string
   accessKeyId: string
   secretAccessKey: string
+  publicEndpoint?: string
 }
 
 const bucketConfigs: BucketConfig[] = JSON.parse(env.BUCKETS)
@@ -33,6 +34,10 @@ export function getS3Client(bucketName: string): S3mini | null {
 
 export function listBucketNames(): string[] {
   return bucketConfigs.map((b) => b.name)
+}
+
+export function getPublicEndpoint(bucketName: string): string | null {
+  return configs.get(bucketName)?.publicEndpoint ?? null
 }
 
 export function sanitizeETag(etag: string): string {

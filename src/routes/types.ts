@@ -52,6 +52,7 @@ export type ObjectInfo = {
 export type ListObjectsResponse = {
   items: ObjectInfo[]
   nextCursor?: string
+  publicEndpoint?: string
 }
 
 export type DownloadResponse = {

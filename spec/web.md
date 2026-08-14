@@ -33,6 +33,7 @@
 - A file table with 3 columns: key, size and last modified
   - size unit auto-selected (B/KiB/MiB/GiB/TiB), rounded up to integer
   - date localized
+  - when the bucket config has a `publicEndpoint`, each object is clickable, link to `${publicEndpoint}/${key}` in new tab
 - "Load more" button appends the next page using `nextCursor`
 
 ## Upload objects

@@ -144,6 +144,7 @@
       state.notFound = false
       state.uploads = []
       state.uploadSeq = 0
+      state.publicEndpoint = null
       document.title = state.bucket
 
       getBuckets()
@@ -244,7 +245,16 @@
     }
     return state.items.map(function (item) {
       return m('tr', [
-        m('td.break-all.font-mono', item.key),
+        state.publicEndpoint
+          ? m(
+              'td.break-all.font-mono',
+              m('a.link', {
+                href: `${state.publicEndpoint}/${item.key}`,
+                target: '_blank',
+                rel: 'noopener',
+              }, item.key),
+            )
+          : m('td.break-all.font-mono', item.key),
         m('td.text-right.tabular-nums', formatSize(item.size)),
         m('td', formatDate(item.lastModified)),
       ])
@@ -414,6 +424,7 @@
         var items = data.items || []
         state.items = cursor ? state.items.concat(items) : items
         state.cursor = data.nextCursor || null
+        state.publicEndpoint = data.publicEndpoint || null
       })
       .catch(function (err) {
         state.loading = false

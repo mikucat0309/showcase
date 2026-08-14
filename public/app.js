@@ -27,7 +27,7 @@
 
   function formatSize(bytes) {
     if (!isFinite(bytes)) return '-'
-    return (bytes / 1048576).toFixed(2) + ' MB'
+    return (bytes / 1048576).toFixed(2) + ' MiB'
   }
 
   function formatDate(iso) {

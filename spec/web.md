@@ -31,7 +31,7 @@
   - debounce 500 ms
   - filters by object key prefix, resets pagination
 - A file table with 3 columns: key, size and last modified
-  - size unit is MiB
+  - size unit auto-selected (B/KiB/MiB/GiB/TiB), rounded up to integer
   - date localized
 - "Load more" button appends the next page using `nextCursor`
 

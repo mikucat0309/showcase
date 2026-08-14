@@ -27,7 +27,14 @@
 
   function formatSize(bytes) {
     if (!isFinite(bytes)) return '-'
-    return (bytes / 1048576).toFixed(2) + ' MiB'
+    var units = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
+    var value = bytes
+    var i = 0
+    while (value >= 1024 && i < units.length - 1) {
+      value /= 1024
+      i++
+    }
+    return Math.ceil(value) + ' ' + units[i]
   }
 
   function formatDate(iso) {

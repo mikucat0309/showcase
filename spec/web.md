@@ -34,3 +34,14 @@
   - size unit is MiB
   - date localized
 - "Load more" button appends the next page using `nextCursor`
+
+## Upload objects
+
+`GET /:bucket` (toolbar)
+
+- "Upload" button opens a multi-file picker
+- Per file: `POST /v1/buckets/:bucket/uploads`
+- Simple mode: PUT the file to the presigned URL
+- Multipart: PUT each slice to its part presigned URL, then `POST .../complete`; on failure `DELETE .../uploads/:id`
+- Each upload shows a progress row (name, progress bar / badge / error); the row is removed 3 s after the upload settles (success or failure)
+- Refresh object list when upload complete

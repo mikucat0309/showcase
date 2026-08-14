@@ -3,9 +3,9 @@
 
   var buckets = null
 
-  function apiGet(url) {
+  function apiJson(method, url, body) {
     return m
-      .request({ method: 'GET', url: url })
+      .request({ method: method, url: url, body: body })
       .catch(function (err) {
         var msg =
           err && err.response && err.response.error
@@ -19,7 +19,7 @@
 
   function getBuckets() {
     if (buckets) return Promise.resolve(buckets)
-    return apiGet('/v1/buckets').then(function (data) {
+    return apiJson('GET', '/v1/buckets').then(function (data) {
       buckets = data.buckets || []
       return buckets
     })
@@ -135,6 +135,8 @@
       state.error = null
       state.ready = false
       state.notFound = false
+      state.uploads = []
+      state.uploadSeq = 0
       document.title = state.bucket
 
       getBuckets()
@@ -172,13 +174,30 @@
         state.error
           ? m('div.mb-4', alertView(state.error.message))
           : null,
-        m('input.input.mb-4.w-full.max-w-sm', {
-          type: 'text',
-          placeholder: 'filter',
-          oninput: function (e) {
-            debounceInput(vnode, e.target.value)
-          },
-        }),
+        m('div.mb-4.flex.items-center.justify-between.gap-2', [
+          m('input.input.w-full.max-w-sm', {
+            type: 'text',
+            placeholder: 'filter',
+            oninput: function (e) {
+              debounceInput(vnode, e.target.value)
+            },
+          }),
+          m('button.btn', { onclick: function () { if (state.fileInput) state.fileInput.click() } }, 'Upload'),
+          m('input', {
+            type: 'file',
+            multiple: true,
+            class: 'hidden',
+            oncreate: function (v) { state.fileInput = v.dom },
+            onchange: function (e) {
+              var files = e.target.files
+              if (files && files.length) uploadFiles(vnode, files)
+              e.target.value = ''
+            },
+          }),
+        ]),
+        state.uploads.length
+          ? m('div.mb-4.flex.flex-col.gap-2', state.uploads.map(uploadRow))
+          : null,
         m(
           'div.overflow-x-auto',
           m('table.table.table-zebra', [
@@ -241,6 +260,137 @@
     load(vnode)
   }
 
+  function uploadFiles(vnode, fileList) {
+    var state = vnode.state
+    Array.prototype.slice.call(fileList).forEach(function (file) {
+      var entry = {
+        id: ++state.uploadSeq,
+        name: file.name,
+        progress: 0,
+        status: 'uploading',
+      }
+      state.uploads.push(entry)
+      uploadFile(vnode, entry, file)
+    })
+    m.redraw()
+  }
+
+  function uploadFile(vnode, entry, file) {
+    var state = vnode.state
+    var url = '/v1/buckets/' + encodeURIComponent(state.bucket) + '/uploads'
+    apiJson('POST', url, {
+      key: file.name,
+      contentType: file.type || 'application/octet-stream',
+      size: file.size,
+    })
+      .then(function (data) {
+        if (data.mode === 'simple') {
+          return putWithProgress(data.url, file, entry)
+        }
+        return uploadMultipart(vnode, data, file, entry)
+      })
+      .then(function () {
+        entry.status = 'done'
+        entry.progress = 100
+        m.redraw()
+        refreshList(vnode)
+        dismissUpload(state, entry)
+      })
+      .catch(function (err) {
+        entry.status = 'error'
+        entry.error = err.message
+        m.redraw()
+        dismissUpload(state, entry)
+      })
+  }
+
+  function dismissUpload(state, entry) {
+    setTimeout(function () {
+      var idx = state.uploads.indexOf(entry)
+      if (idx !== -1) {
+        state.uploads.splice(idx, 1)
+        m.redraw()
+      }
+    }, 3000)
+  }
+
+  function putWithProgress(url, file, entry) {
+    return new Promise(function (resolve, reject) {
+      var xhr = new XMLHttpRequest()
+      xhr.open('PUT', url)
+      xhr.upload.onprogress = function (e) {
+        if (e.lengthComputable) {
+          entry.progress = Math.round((e.loaded / e.total) * 100)
+          m.redraw()
+        }
+      }
+      xhr.onload = function () {
+        if (xhr.status >= 200 && xhr.status < 300) resolve()
+        else reject(new Error('Upload failed (' + xhr.status + ')'))
+      }
+      xhr.onerror = function () {
+        reject(new Error('Upload failed'))
+      }
+      xhr.send(file)
+    })
+  }
+
+  function uploadMultipart(vnode, data, file, entry) {
+    var state = vnode.state
+    var partSize = data.partSize
+    var uploadUrl =
+      '/v1/buckets/' + encodeURIComponent(state.bucket) + '/uploads/' + encodeURIComponent(data.uploadId)
+    var pending = data.parts.slice()
+    var parts = []
+
+    function uploadNext() {
+      if (!pending.length) return Promise.resolve()
+      var part = pending.shift()
+      var start = (part.partNumber - 1) * partSize
+      var blob = file.slice(start, start + partSize)
+      return fetch(part.url, { method: 'PUT', body: blob }).then(function (res) {
+        if (!res.ok) throw new Error('Part ' + part.partNumber + ' failed (' + res.status + ')')
+        var etag = res.headers.get('ETag')
+        if (!etag) throw new Error('Part ' + part.partNumber + ' missing ETag')
+        parts.push({ partNumber: part.partNumber, etag: etag })
+        entry.progress = Math.round((parts.length / data.parts.length) * 100)
+        m.redraw()
+        return uploadNext()
+      })
+    }
+
+    return uploadNext()
+      .then(function () {
+        return apiJson('POST', uploadUrl + '/complete', { key: data.key, parts: parts })
+      })
+      .catch(function (err) {
+        apiJson('DELETE', uploadUrl, { key: data.key }).catch(function () {})
+        throw err
+      })
+  }
+
+  function uploadRow(entry) {
+    var status
+    if (entry.status === 'uploading') {
+      status = m('progress.progress.w-40', { value: entry.progress, max: 100 })
+    } else if (entry.status === 'done') {
+      status = m('span.badge.badge-success', 'Done')
+    } else {
+      status = m('div.text-sm.text-error', entry.error || 'Failed')
+    }
+    return m('div.flex.items-center.gap-3', [
+      m('div.min-w-0.flex-1.truncate.text-sm', entry.name),
+      status,
+    ])
+  }
+
+  function refreshList(vnode) {
+    var state = vnode.state
+    state.items = []
+    state.cursor = null
+    load(vnode)
+  }
+
   function load(vnode) {
     var state = vnode.state
     if (state.loading) return
@@ -251,7 +401,7 @@
       '/v1/buckets/' + encodeURIComponent(state.bucket) + '/objects?limit=100'
     if (state.prefix) url += '&prefix=' + encodeURIComponent(state.prefix)
     if (cursor) url += '&cursor=' + encodeURIComponent(cursor)
-    apiGet(url)
+    apiJson('GET', url)
       .then(function (data) {
         state.loading = false
         var items = data.items || []

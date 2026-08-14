@@ -6,6 +6,13 @@ import uploads from './routes/uploads'
 
 const app = new Hono()
 
+app.use('*', async (c, next) => {
+  if (!c.req.header('sec-gpc')) {
+    return c.json({ error: 'Forbidden' }, 403)
+  }
+  return next()
+})
+
 app.onError((error, c) => {
   if (error instanceof HTTPException) {
     return c.json<ErrorResponse>({ error: error.message }, error.status)

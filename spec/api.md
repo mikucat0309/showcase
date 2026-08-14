@@ -9,7 +9,7 @@ S3 JSON API
 
 ## List bucket
 
-GET /buckets
+GET /v1/buckets
 
 Response 200:
 ```ts
@@ -18,7 +18,7 @@ Response 200:
 
 ## List object
 
-GET /buckets/<bucketName>/objects
+GET /v1/buckets/<bucketName>/objects
 
 Query:
 - `prefix?: string`
@@ -35,7 +35,7 @@ Response 200:
 
 ## Download object
 
-GET /buckets/<bucketName>/objects/<key>
+GET /v1/buckets/<bucketName>/objects/<key>
 
 Query:
 - `expiresIn?: number` (min 1, max 604800) — if set, returns a presigned URL; otherwise returns a direct URL
@@ -50,7 +50,7 @@ Response 200:
 
 ## Create simple / multipart upload
 
-POST /buckets/<bucketName>/uploads
+POST /v1/buckets/<bucketName>/uploads
 
 Request:
 ```ts
@@ -88,7 +88,7 @@ Response 200 (multipart):
 
 ## Complete multipart upload
 
-POST /buckets/<bucketName>/uploads/<uploadID>/complete
+POST /v1/buckets/<bucketName>/uploads/<uploadID>/complete
 
 Request:
 ```ts
@@ -102,7 +102,7 @@ Response 200:
 
 ## Abort multipart upload
 
-DELETE /buckets/<bucketName>/uploads/<uploadID>
+DELETE /v1/buckets/<bucketName>/uploads/<uploadID>
 
 Request body:
 ```ts
@@ -113,6 +113,6 @@ Response: `204 No Content`
 
 ## Delete a object
 
-DELETE /buckets/<bucketName>/objects/<key>
+DELETE /v1/buckets/<bucketName>/objects/<key>
 
 Response: `204 No Content`

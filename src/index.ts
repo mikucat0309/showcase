@@ -26,7 +26,7 @@ app.notFound((c) => {
   return c.json<ErrorResponse>({ error: 'Not found' }, 404)
 })
 
-app.route('/', objects)
-app.route('/', uploads)
+app.route('/v1', objects)
+app.route('/v1', uploads)
 
 export default app

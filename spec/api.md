@@ -7,6 +7,26 @@ S3 JSON API
 - Error envelope: `{ "error": string }`
 - Buckets: configured via `BUCKETS` env binding (JSON in `wrangler.jsonc`)
 
+## Environment variables
+
+### `BUCKETS`
+
+JSON array of bucket configs
+
+Example:
+
+```json
+[
+  {
+    "name": "bucket1",
+    "region": "auto",
+    "endpoint": "https://your-s3-endpoint.com/my-bucket",
+    "accessKeyId": "YOUR_KEY",
+    "secretAccessKey": "YOUR_SECRET"
+  }
+]
+```
+
 ## List bucket
 
 GET /v1/buckets
